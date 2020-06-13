@@ -313,16 +313,15 @@ def get_selection(pickedDate, pickedTech, pickedPlan):
     # Obtener cantidad de bytes por semana.
     # Pinta de otro color la barra seleccionada
     xVal = []
-    yVal = []
+    yVal_control = []
+    yVal_prepago = []
+    yVal_postpago = []
     colorVal = [
         "#F4EC15",
-        "#66E01F",
-        "#4CDC20",
         "#28C86D",
-        "#2BB5B8",
         "#2E4EA4",
     ]
-
+    
     # Create new df for sum of weekly sum bytes
     df_subHist = df
     if pickedDate is not None:
@@ -351,8 +350,17 @@ def get_selection(pickedDate, pickedTech, pickedPlan):
         # CAMBIAR ESTO A SEMANAS
         # Get the number of rides at a particular time
 
-        yVal.append(df_subHist[df_subHist["fecha"] == week]["sum_bytes"].sum())
-    return [np.array(xVal), np.array(yVal), np.array(colorVal)]
+        
+        yVal_control.append(df_subHist[(df_subHist["fecha"] == week) & (df_subHist["tipo_plan"] == 'Control')]["sum_bytes"].sum())
+        yVal_prepago.append(df_subHist[(df_subHist["fecha"] == week) & (df_subHist["tipo_plan"] == 'Prepago')]["sum_bytes"].sum())
+        yVal_postpago.append(df_subHist[(df_subHist["fecha"] == week) & (df_subHist["tipo_plan"] == 'Postpago')]["sum_bytes"].sum())
+
+
+    return [np.array(xVal),
+            [np.array(yVal_control), [colorVal[0]]*len(weeks)],
+            [np.array(yVal_prepago), [colorVal[1]]*len(weeks)],
+            [np.array(yVal_postpago), [colorVal[2]]*len(weeks)]
+            ]
 
 
 # Output de histograma
@@ -367,63 +375,54 @@ def get_selection(pickedDate, pickedTech, pickedPlan):
 )
 def update_histogram(pickedWeek, pickedTech, pickedPlan):
 
-    [xVal, yVal, colorVal] = get_selection(pickedWeek, pickedTech, pickedPlan)
 
-    layout = go.Layout(
-        bargap=0.01,
-        bargroupgap=0,
-        barmode="group",
-        margin=go.layout.Margin(l=10, r=0, t=0, b=50),
-        showlegend=False,
-        plot_bgcolor="#323130",
-        paper_bgcolor="#323130",
-        dragmode="select",
-        font=dict(color="white"),
-        xaxis=dict(
-            range=[-0.5, len(xVal) - 0.5], showgrid=False, nticks=25, fixedrange=True,
-        ),
-        yaxis=dict(
-            range=[0, max(yVal) + max(yVal) / 4],
-            showticklabels=False,
-            showgrid=False,
-            fixedrange=True,
-            rangemode="nonnegative",
-            zeroline=False,
-        ),
-        annotations=[
-            dict(
-                x=xi,
-                y=yi,
-                text=humanize.naturalsize(yi),
-                xanchor="center",
-                yanchor="bottom",
-                showarrow=False,
-                font=dict(color="white"),
-            )
-            for xi, yi in enumerate(yVal)
-        ],
-    )
+    xVal, control, prepago, postpago = get_selection(pickedWeek, pickedTech, pickedPlan) 
+    yVal = np.array([c + p + pp for c,p,pp in zip(control[0] , prepago[0] , postpago[0])])
 
-    return go.Figure(
+
+    figure = go.Figure(
         data=[
             go.Bar(
-                x=list(range(len(xVal))),
-                y=yVal,
-                marker=dict(color=colorVal),
-                hoverinfo="x",
-            ),
-            go.Scatter(
-                opacity=0,
                 x=xVal,
-                y=yVal / 2,
-                hoverinfo="none",
-                mode="markers",
-                marker=dict(color="rgb(66, 134, 244, 0)", symbol="square", size=40),
-                visible=True,
+                y=control[0],
+                marker_color = "#F4EC15",
+                hoverinfo="y",
+                name='Control',
             ),
+            go.Bar(
+                x=xVal,
+                y=prepago[0],
+                marker_color = "#28C86D",
+                hoverinfo="y",
+                name='Prepago',
+            ),
+            go.Bar(
+                x=xVal,
+                y=postpago[0],
+                marker_color = "#2E4EA4",
+                hoverinfo="y",
+                name='Postpago',
+            ),
+            
         ],
-        layout=layout,
+
     )
+    figure.update_layout(barmode='stack',
+                     plot_bgcolor="#323130",
+                     margin=go.layout.Margin(l=10, r=0, t=0, b=50),
+                     font=dict(color="white"),
+                     paper_bgcolor="#323130",
+                     yaxis=dict(showgrid=False),
+                     annotations=[
+                         dict(
+                            x=xi,
+                            y=yi,
+                           text=humanize.naturalsize(yi),
+                           font=dict(color="white"),
+                         ) for xi, yi in zip(xVal, yVal)
+                         ],
+                     )
+    return figure
 
 
 # Output del mapa
@@ -573,4 +572,4 @@ def update_voronoi(datePicked, selectedLocation, chosen_tech, chosen_plan):
 
 
 if __name__ == "__main__":
-    app.run_server(debug=False)
+    app.run_server(debug=True)
