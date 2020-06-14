@@ -258,9 +258,9 @@ map_graph = html.Div(
         html.Div(
             className="text-padding",
             children=html.P(
-                "Seleccione cualquiera de las barras en "
-                "el histograma visualizar el consumo de "
-                "datos en ese periodo de tiempo."
+                "Las barras del histograma "
+                "muestran el consumo total de datos "
+                "de la semana."
             ),
         ),
         dcc.Graph(id="histogram"),
@@ -384,22 +384,22 @@ def update_histogram(pickedWeek, pickedTech, pickedPlan):
         data=[
             go.Bar(
                 x=xVal,
-                y=control[0],
-                marker_color = "#F4EC15",
-                hoverinfo="y",
-                name='Control',
-            ),
-            go.Bar(
-                x=xVal,
                 y=prepago[0],
-                marker_color = "#28C86D",
+                marker_color = "#3E4989", #"#28C86D",
                 hoverinfo="y",
                 name='Prepago',
             ),
             go.Bar(
                 x=xVal,
+                y=control[0],
+                marker_color = "#22928B", #"#F4EC15",
+                hoverinfo="y",
+                name='Control',
+            ),
+            go.Bar(
+                x=xVal,
                 y=postpago[0],
-                marker_color = "#2E4EA4",
+                marker_color = "#B4DE2B", #"#2E4EA4",
                 hoverinfo="y",
                 name='Postpago',
             ),
@@ -409,19 +409,28 @@ def update_histogram(pickedWeek, pickedTech, pickedPlan):
     )
     figure.update_layout(barmode='stack',
                      plot_bgcolor="#323130",
-                     margin=go.layout.Margin(l=10, r=0, t=0, b=50),
+                     margin=go.layout.Margin(l=50, r=15, t=0, b=0),
                      font=dict(color="white"),
                      paper_bgcolor="#323130",
+                     xaxis = dict(type = "date",
+                                  tickangle=0.1),
                      yaxis=dict(showgrid=False),
+                     legend_orientation="h",
+                     legend=dict(x=-0.056, y=1.2),
                      annotations=[
                          dict(
                             x=xi,
                             y=yi,
                            text=humanize.naturalsize(yi),
+                           arrowsize= 0.3,
+                           xshift= 7,
+                           standoff = 0,
+                           arrowcolor = "#323130",
                            font=dict(color="white"),
                          ) for xi, yi in zip(xVal, yVal)
                          ],
                      )
+
     return figure
 
 
