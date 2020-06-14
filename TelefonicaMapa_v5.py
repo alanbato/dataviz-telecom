@@ -51,8 +51,8 @@ sitios = df[["sitio", "latitud", "longitud"]].drop_duplicates()
 # Data Frame para Sankey
 
 # Agrupar por tecnologia,tipo plan y plan
-dfsankey2 = df.groupby(["tecnologia", "tipo_plan"], as_index=False)["sum_bytes"].count()
-dfsankey3 = df.groupby(["tipo_plan", "plan"], as_index=False)["sum_bytes"].count()
+dfsankey2 = df.groupby(["tecnologia", "tipo_plan"], as_index=False)["sum_bytes"].sum()
+dfsankey3 = df.groupby(["tipo_plan", "plan"], as_index=False)["sum_bytes"].sum()
 dfsankey2.columns = ["a", "b", "Quantity"]
 dfsankey3.columns = ["a", "b", "Quantity"]
 dfsankey = dfsankey2.append(dfsankey3)
@@ -80,14 +80,36 @@ fig = go.Figure(
 )
 
 fig.update_layout(
-    title_text="Tecnologias y Planes en Telefonica",
+    title_text="Por tipo de tecnologia y planes en Telefónica",
     font=dict(size=10, color="white"),
     plot_bgcolor="red",
-    paper_bgcolor="#343332",
+    paper_bgcolor="#1e1e1e",
+)
+
+#first tab histogram analysis
+df_Histogram = df.groupby(["tipo_plan"]).agg({"sum_bytes": "sum"})
+df_Histogram = df_Histogram.reset_index()
+
+fig2 = go.Figure()
+fig2.add_trace(go.Bar(
+    y=df_Histogram["tipo_plan"],
+    x=df_Histogram["sum_bytes"],
+    orientation='h',
+    marker=dict(
+        color="#00ACA8",
+        line=dict(color="#00ACA8", width=1)
+    )
+))
+
+fig2.update_layout(
+    #title_text="Planes en Telefonica",
+    #yaxis_title="Planes",
+    font=dict(size=12, color="white"),
+    plot_bgcolor="#1e1e1e",
+    paper_bgcolor="#1e1e1e",
 )
 
 print("Agrupando por semana")
-
 # DataFrame agrupado por semana
 grouped = df.groupby(["sitio", "tipo_plan", "tecnologia", "fecha"]).agg(
     {"sum_bytes": "sum"}
@@ -149,30 +171,203 @@ instructions = html.P(
     "Seleccione el lunes de la semana que desea visualizar utilizando el calendario."
 )
 
+####Formato Primer Tab
+# Colors
+bgcolor = "#333232"  # mapbox light map land color
+
+# Figure template
+row_heights = [150,490,300]
+template = {'layout': {'paper_bgcolor': '#1e1e1e', 'plot_bgcolor': bgcolor}} 
+
+
+def blank_fig(height, value):
+    """
+    Build blank figure with the requested height
+    """
+    return {
+        'data': [{
+            'type': 'indicator',
+            'value':value, 
+            'number': {
+                'font': {
+                    'color': 'white',
+                    'size': 40,
+                }
+            }
+        }],
+        'layout': {
+            'template': template,
+            'height': 100,
+            'margin': {'l': 10, 'r': 10, 't': 10, 'b': 10}
+        }
+    }
+
+
+
+def build_modal_info_overlay(id, side, content):
+    
+    #Build div representing the info overlay for a plot panel
+    div = html.Div([  # modal div
+        html.Div([  # content div
+            html.Div([
+                html.H4([
+                    "Info",
+                    html.Img(
+                        id=f'close-{id}-modal',
+                        src="assets/times-circle-solid.svg",
+                        n_clicks=0,
+                        className='info-icon',
+                        style={'margin': 100},
+                    ),
+                ], className="container_title", style={'color': 'white'}),
+
+                dcc.Markdown(
+                    content
+                ),
+            ])
+        ],
+            className=f'modal-content {side}',
+        ),
+        html.Div(className='modal')
+    ],
+        id=f"{id}-modal",
+        style={"display": "none"},
+    )
+
+    return div
+
 # Tab 1 - Analisis
 analysis_tab = dcc.Tab(
-    label="Analisis",
+    label="Análisis ",
     style=tab_style,
     selected_style=tab_selected_style,
     children=[
         html.Div(
             className="row",
             children=[
-                # Column for user controls
-                html.Div(
-                    className="four columns div-for-data",
-                    children=[
-                        company_logo,
-                        html.H1("Análisis exploratorio"),
-                        html.H2("""Instancias de: Octubre 4 - Noviembre 5, 2019""",),
-                        html.H2("""614 Radio Bases"""),
-                        html.H2(""" TEC de MTY, 2020"""),
-                    ],
+
+          html.Div([
+            html.H1(children=[
+                'Análisis descriptivo',
+                html.A(
+                    html.Img(
+                        className="logo",
+                        src=app.get_asset_url("telefonica-logo.png"),
+                        style={'float': 'right', 'height': '50px'}
+                    ),             
                 ),
-                html.Div(
-                    className="eight columns div-for-chart bg-grey",
-                    children=[dcc.Graph(figure=fig)],
+            ]),
+            html.Div(children=[
+                html.Div(children=[
+                    #numero de registros
+                    html.H4([
+                        "Cantidad de registros",
+                        ], 
+                        className="container_title",
+                        style={
+                            'text-align': 'center',
+                            'font': {
+                                'color': 'white',
+                                'size': 40,
+                                }
+                            },
+                    ),
+                    dcc.Loading(
+                        dcc.Graph(
+                            id='indicator-graph2',
+                            figure=blank_fig(row_heights[1], 6831617),
+                            config={'displayModeBar': False},
+                        ),
+                        className='svg-container',
+                        style={'height': 250},
+                    ),
+                    #numero de antenas
+                    html.H4([
+                        "Cantidad de radiobases",], 
+                        className="container_title",
+                        style={
+                            'text-align': 'center',
+                            'font': {
+                                'color': 'white',
+                                'size': 40,
+                                }
+                            },
+                        ),
+                    dcc.Loading(
+                        dcc.Graph(
+                            id='indicator-graph3',
+                            figure=blank_fig(row_heights[1], df["sitio"].nunique()),
+                            config={'displayModeBar': False},
+                        ),
+                        className='svg-container',
+                        style={'height': 250},
+                    ),
+                    #fecha
+                    html.H4(['Fecha de registros'],
+                    className="container_title",
+                    style={
+                        'height':30,
+                        'text-align': 'center',
+                        'font': {
+                            'color': 'white',
+                            'size': 40,
+                            }
+                        },
+                    ),
+                    dcc.Markdown(''' ''', style={'height':10,'padding':0}),
+                    html.P("Oct - Nov, 2019",
+                        className='svg-container',
+                        style={
+                        'height': 60,
+                        'padding':0,
+                        'text-align': 'center',
+                        'vertical-align': 'baseline',
+                        'justify-content': 'center',
+                        'font-size': 40,
+                        'color': 'white'
+                        },
+                    ),
+                ], 
+                className='six columns pretty_container', 
+                id="indicator-div"),
+
+                html.Div(children=[
+                        html.H4([
+                            "Consumo de datos por tipo de plan",
+                            ], 
+                        className="container_title"),
+                        dcc.Graph(
+                            id='radio-histogram',
+                            figure=fig2,
+                            config={'displayModeBar': False}
+                        ),
+                    ], 
+                className='six columns pretty_container', 
+                id="radio-div"),
+            ]),
+            html.Div(children=[
+                html.H4([
+                    "Distribución de consumo de datos",
+                    html.Img(
+                        id='show-map-modal',
+                        #src="assets/question-circle-solid.svg",
+                        className='info-icon',
+                    ),
+                ], className="container_title"),
+                dcc.Graph(
+                    id='map',
+                    figure=fig,
+                    config={'displayModeBar': False},
                 ),
+            ], 
+            className='twelve columns pretty-container',
+                style={
+                    'width': '98%',
+                    'Margin-left': '10px',
+                },
+                id="map-div"
+            )
+            ]),
             ],
         ),
     ],
@@ -258,9 +453,7 @@ map_graph = html.Div(
         html.Div(
             className="text-padding",
             children=html.P(
-                "Las barras del histograma "
-                "muestran el consumo total de datos "
-                "de la semana."
+                "Consumo de datos en zona metropolitana de MTY"
             ),
         ),
         dcc.Graph(id="histogram"),
@@ -269,7 +462,7 @@ map_graph = html.Div(
 
 # Tab 2 - Mapa Dinamico
 map_tab = dcc.Tab(
-    label="Mapa",
+    label="Tráfico de Datos",
     style=tab_style,
     selected_style=tab_selected_style,
     children=[
@@ -296,7 +489,7 @@ voronoi_graph = html.Div(
 )
 
 voronoi_tab = dcc.Tab(
-    label="Voronoi",
+    label="Cobertura de Antenas",
     style=tab_style,
     selected_style=tab_selected_style,
     children=[html.Div(children=[voronoi_graph])],
@@ -307,7 +500,6 @@ app.layout = html.Div(
         dcc.Tabs(children=[analysis_tab, map_tab, voronoi_tab], style=tabs_styles)
     ]
 )
-
 
 def get_selection(pickedDate, pickedTech, pickedPlan):
     # Obtener cantidad de bytes por semana.
@@ -321,7 +513,7 @@ def get_selection(pickedDate, pickedTech, pickedPlan):
         "#28C86D",
         "#2E4EA4",
     ]
-    
+
     # Create new df for sum of weekly sum bytes
     df_subHist = df
     if pickedDate is not None:
@@ -338,23 +530,14 @@ def get_selection(pickedDate, pickedTech, pickedPlan):
 
     weeks = df["fecha"].unique()
 
-    # if week is not None:
-    # xSelected.extend([int(x) for x in week])
 
     # utilizando 4 semanas
     for week in weeks:
-        # If bar is selected then color it white
-        # if i in xSelected and len(xSelected) < 10:
-        # colorVal[i] = "#FFFFFF"
         xVal.append(np.datetime_as_string(week, unit="D"))
-        # CAMBIAR ESTO A SEMANAS
-        # Get the number of rides at a particular time
 
-        
         yVal_control.append(df_subHist[(df_subHist["fecha"] == week) & (df_subHist["tipo_plan"] == 'Control')]["sum_bytes"].sum())
         yVal_prepago.append(df_subHist[(df_subHist["fecha"] == week) & (df_subHist["tipo_plan"] == 'Prepago')]["sum_bytes"].sum())
         yVal_postpago.append(df_subHist[(df_subHist["fecha"] == week) & (df_subHist["tipo_plan"] == 'Postpago')]["sum_bytes"].sum())
-
 
     return [np.array(xVal),
             [np.array(yVal_control), [colorVal[0]]*len(weeks)],
@@ -374,7 +557,6 @@ def get_selection(pickedDate, pickedTech, pickedPlan):
     ],
 )
 def update_histogram(pickedWeek, pickedTech, pickedPlan):
-
 
     xVal, control, prepago, postpago = get_selection(pickedWeek, pickedTech, pickedPlan) 
     yVal = np.array([c + p + pp for c,p,pp in zip(control[0] , prepago[0] , postpago[0])])
@@ -474,7 +656,6 @@ def update_graph(datePicked, selectedLocation, chosen_tech, chosen_plan):
             go.Scattermapbox(
                 lon=df_sub["longitud"],
                 lat=df_sub["latitud"],
-                # teras=df_sub["sum_bytes"]/1000000000000,
                 marker=dict(
                     showscale=True,
                     color=df_sub["sum_bytes"],
@@ -491,15 +672,16 @@ def update_graph(datePicked, selectedLocation, chosen_tech, chosen_plan):
                         thicknessmode="pixels",
                     ),
                 ),
-                hovertext=[
-                    "Sitio: {} <br> Lat: {} <br> Lon: {} <br> Consumo Bytes: {}".format(
+                mode="markers",
+                hoverinfo="text",
+                text=[
+                    "Sitio: {} <br> Coord: ({}, {}) <br> Consumo Datos: {}".format(
                         i, j, k, humanize.naturalsize(l)
                     )
                     for i, j, k, l in zip(
                         df["sitio"], df["latitud"], df["longitud"], df_sub["sum_bytes"]
                     )
-                ],
-                mode="markers+text",
+                ], 
             ),
             # Plot important locations on the map
             go.Scattermapbox(
@@ -530,7 +712,6 @@ def update_graph(datePicked, selectedLocation, chosen_tech, chosen_plan):
 
 
 # Output del Voronoi
-
 
 @app.callback(
     Output("voronoi-graph", "figure"),
@@ -571,14 +752,11 @@ def update_voronoi(datePicked, selectedLocation, chosen_tech, chosen_plan):
         mapbox=dict(
             accesstoken=mapbox_access_token,
             bearing=0,
-            # style="dark",
-            # center={"lat": latInitial, "lon": lonInitial},
             pitch=40,
-            # zoom=zoom,
         ),
     )
     return voronoi_fig
 
 
 if __name__ == "__main__":
-    app.run_server(debug=True)
+    app.run_server(debug=False)
