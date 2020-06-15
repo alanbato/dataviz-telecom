@@ -490,7 +490,7 @@ voronoi_graph = html.Div(
     className="div-for-charts bg-grey",
     children=[
         dcc.Graph(
-            id="voronoi-graph", style={"backgroundColor": "#343332", "height": "920px"}
+            id="voronoi-graph", style={"backgroundColor": "#343332", "height": "900px"}
         )
     ],
 )
@@ -499,7 +499,20 @@ voronoi_tab = dcc.Tab(
     label="Cobertura de Antenas",
     style=tab_style,
     selected_style=tab_selected_style,
-    children=[html.Div(children=[voronoi_graph])],
+    children=[
+        html.Div(
+            children=[
+                html.P(
+                    "Esta grafica muestra las zonas teoricas de cobertura de cada radiobase."
+                ),
+                html.P(
+                    "Al estar ubicado dentro de una región, la radiobase más cercana "
+                    "es aquella representada por el punto rojo dentro de dicha región."
+                ),
+            ]
+        ),
+        html.Div(children=[voronoi_graph]),
+    ],
 )
 # Layout of Dash app
 app.layout = html.Div(
@@ -680,10 +693,10 @@ def update_graph(datePicked, selectedLocation, chosen_tech, chosen_plan):
                     showscale=True,
                     color=df_sub["sum_bytes"],
                     opacity=1,
-                    size=5,
+                    size=10,
                     colorscale=px.colors.sequential.Viridis,
                     colorbar=dict(
-                        title="Consumo<br>Datos",
+                        title="Consumo<br>de Datos",
                         x=0.93,
                         xpad=0,
                         nticks=24,
@@ -695,7 +708,7 @@ def update_graph(datePicked, selectedLocation, chosen_tech, chosen_plan):
                 mode="markers",
                 hoverinfo="text",
                 text=[
-                    "Sitio: {} <br> Coord: ({}, {}) <br> Consumo Datos: {}".format(
+                    "Sitio: {} <br> Coord: ({}, {}) <br> Consumo de Datos: {}".format(
                         i, j, k, humanize.naturalsize(l)
                     )
                     for i, j, k, l in zip(
@@ -748,21 +761,42 @@ def update_voronoi(datePicked, selectedLocation, chosen_tech, chosen_plan):
     with open("tower_vor.json") as jsonfile:
         geojson = json.load(jsonfile)
     center = {"lat": 25.6823, "lon": -100.3030}
-    voronoi_fig = px.choropleth_mapbox(
-        voronoi_df,
-        geojson=geojson,
-        locations="sitio",
-        color="normalized",
-        hover_data=["consumed_data"],
-        featureidkey="properties.tower",
-        color_continuous_scale=px.colors.sequential.Viridis,
-        range_color=(0, 1),
-        center=center,
-        mapbox_style="carto-darkmatter",
-        zoom=12,
-        opacity=0.2,
+    voronoi_fig = go.Figure(
+        go.Choroplethmapbox(
+            name="",
+            geojson=geojson,
+            locations=voronoi_df.sitio,
+            z=voronoi_df.sum_bytes,
+            featureidkey="properties.tower",
+            colorscale="Viridis",
+            hoverinfo="location+z",
+            marker_opacity=0.3,
+            marker_line_color="#d8d8d8",
+            marker_line_width=2,
+            selected_marker_opacity=0.8,
+            unselected_marker_opacity=0.3,
+            colorbar=dict(
+                title="Consumo<br>de Datos",
+                nticks=24,
+                tickfont=dict(color="#d8d8d8"),
+                titlefont=dict(color="#d8d8d8"),
+                thicknessmode="pixels",
+            ),
+        )
+    )
+    voronoi_fig.add_trace(
+        go.Scattermapbox(
+            lon=voronoi_df.longitud,
+            lat=voronoi_df.latitud,
+            mode="markers",
+            marker=dict(opacity=0.5, size=10),
+        )
     )
     voronoi_fig.update_layout(
+        title_text="Mapa de radiobases por regiones",
+        mapbox_style="carto-darkmatter",
+        mapbox_zoom=12,
+        mapbox_center=center,
         autosize=True,
         margin={"r": 0, "t": 0, "l": 0, "b": 0},
         uirevision="foo",
