@@ -86,24 +86,23 @@ fig.update_layout(
     paper_bgcolor="#1e1e1e",
 )
 
-#first tab histogram analysis
+# first tab histogram analysis
 df_Histogram = df.groupby(["tipo_plan"]).agg({"sum_bytes": "sum"})
 df_Histogram = df_Histogram.reset_index()
 
 fig2 = go.Figure()
-fig2.add_trace(go.Bar(
-    y=df_Histogram["tipo_plan"],
-    x=df_Histogram["sum_bytes"],
-    orientation='h',
-    marker=dict(
-        color="#00ACA8",
-        line=dict(color="#00ACA8", width=1)
+fig2.add_trace(
+    go.Bar(
+        y=df_Histogram["tipo_plan"],
+        x=df_Histogram["sum_bytes"],
+        orientation="h",
+        marker=dict(color="#00ACA8", line=dict(color="#00ACA8", width=1)),
     )
-))
+)
 
 fig2.update_layout(
-    #title_text="Planes en Telefonica",
-    #yaxis_title="Planes",
+    # title_text="Planes en Telefonica",
+    # yaxis_title="Planes",
     font=dict(size=12, color="white"),
     plot_bgcolor="#1e1e1e",
     paper_bgcolor="#1e1e1e",
@@ -176,8 +175,8 @@ instructions = html.P(
 bgcolor = "#333232"  # mapbox light map land color
 
 # Figure template
-row_heights = [150,490,300]
-template = {'layout': {'paper_bgcolor': '#1e1e1e', 'plot_bgcolor': bgcolor}} 
+row_heights = [150, 490, 300]
+template = {"layout": {"paper_bgcolor": "#1e1e1e", "plot_bgcolor": bgcolor}}
 
 
 def blank_fig(height, value):
@@ -185,56 +184,58 @@ def blank_fig(height, value):
     Build blank figure with the requested height
     """
     return {
-        'data': [{
-            'type': 'indicator',
-            'value':value, 
-            'number': {
-                'font': {
-                    'color': 'white',
-                    'size': 40,
-                }
+        "data": [
+            {
+                "type": "indicator",
+                "value": value,
+                "number": {"font": {"color": "white", "size": 40,}},
             }
-        }],
-        'layout': {
-            'template': template,
-            'height': 100,
-            'margin': {'l': 10, 'r': 10, 't': 10, 'b': 10}
-        }
+        ],
+        "layout": {
+            "template": template,
+            "height": 100,
+            "margin": {"l": 10, "r": 10, "t": 10, "b": 10},
+        },
     }
 
 
-
 def build_modal_info_overlay(id, side, content):
-    
-    #Build div representing the info overlay for a plot panel
-    div = html.Div([  # modal div
-        html.Div([  # content div
-            html.Div([
-                html.H4([
-                    "Info",
-                    html.Img(
-                        id=f'close-{id}-modal',
-                        src="assets/times-circle-solid.svg",
-                        n_clicks=0,
-                        className='info-icon',
-                        style={'margin': 100},
-                    ),
-                ], className="container_title", style={'color': 'white'}),
 
-                dcc.Markdown(
-                    content
-                ),
-            ])
+    # Build div representing the info overlay for a plot panel
+    div = html.Div(
+        [  # modal div
+            html.Div(
+                [  # content div
+                    html.Div(
+                        [
+                            html.H4(
+                                [
+                                    "Info",
+                                    html.Img(
+                                        id=f"close-{id}-modal",
+                                        src="assets/times-circle-solid.svg",
+                                        n_clicks=0,
+                                        className="info-icon",
+                                        style={"margin": 100},
+                                    ),
+                                ],
+                                className="container_title",
+                                style={"color": "white"},
+                            ),
+                            dcc.Markdown(content),
+                        ]
+                    )
+                ],
+                className=f"modal-content {side}",
+            ),
+            html.Div(className="modal"),
         ],
-            className=f'modal-content {side}',
-        ),
-        html.Div(className='modal')
-    ],
         id=f"{id}-modal",
         style={"display": "none"},
     )
 
     return div
+
 
 # Tab 1 - Analisis
 analysis_tab = dcc.Tab(
@@ -245,129 +246,137 @@ analysis_tab = dcc.Tab(
         html.Div(
             className="row",
             children=[
-
-          html.Div([
-            html.H1(children=[
-                'Análisis descriptivo',
-                html.A(
-                    html.Img(
-                        className="logo",
-                        src=app.get_asset_url("telefonica-logo.png"),
-                        style={'float': 'right', 'height': '50px'}
-                    ),             
+                html.Div(
+                    [
+                        html.H1(
+                            children=[
+                                "Análisis descriptivo",
+                                html.A(
+                                    html.Img(
+                                        className="logo",
+                                        src=app.get_asset_url("telefonica-logo.png"),
+                                        style={"float": "right", "height": "50px"},
+                                    ),
+                                ),
+                            ]
+                        ),
+                        html.Div(
+                            children=[
+                                html.Div(
+                                    children=[
+                                        # numero de registros
+                                        html.H4(
+                                            ["Cantidad de registros",],
+                                            className="container_title",
+                                            style={
+                                                "text-align": "center",
+                                                "font": {"color": "white", "size": 40,},
+                                            },
+                                        ),
+                                        dcc.Loading(
+                                            dcc.Graph(
+                                                id="indicator-graph2",
+                                                figure=blank_fig(
+                                                    row_heights[1], 6831617
+                                                ),
+                                                config={"displayModeBar": False},
+                                            ),
+                                            className="svg-container",
+                                            style={"height": 250},
+                                        ),
+                                        # numero de antenas
+                                        html.H4(
+                                            ["Cantidad de radiobases",],
+                                            className="container_title",
+                                            style={
+                                                "text-align": "center",
+                                                "font": {"color": "white", "size": 40,},
+                                            },
+                                        ),
+                                        dcc.Loading(
+                                            dcc.Graph(
+                                                id="indicator-graph3",
+                                                figure=blank_fig(
+                                                    row_heights[1],
+                                                    df["sitio"].nunique(),
+                                                ),
+                                                config={"displayModeBar": False},
+                                            ),
+                                            className="svg-container",
+                                            style={"height": 250},
+                                        ),
+                                        # fecha
+                                        html.H4(
+                                            ["Fecha de registros"],
+                                            className="container_title",
+                                            style={
+                                                "height": 30,
+                                                "text-align": "center",
+                                                "font": {"color": "white", "size": 40,},
+                                            },
+                                        ),
+                                        dcc.Markdown(
+                                            """ """, style={"height": 10, "padding": 0}
+                                        ),
+                                        html.P(
+                                            "Oct - Nov, 2019",
+                                            className="svg-container",
+                                            style={
+                                                "height": 60,
+                                                "padding": 0,
+                                                "text-align": "center",
+                                                "vertical-align": "baseline",
+                                                "justify-content": "center",
+                                                "font-size": 40,
+                                                "color": "white",
+                                            },
+                                        ),
+                                    ],
+                                    className="six columns pretty_container",
+                                    id="indicator-div",
+                                ),
+                                html.Div(
+                                    children=[
+                                        html.H4(
+                                            ["Consumo de datos por tipo de plan",],
+                                            className="container_title",
+                                        ),
+                                        dcc.Graph(
+                                            id="radio-histogram",
+                                            figure=fig2,
+                                            config={"displayModeBar": False},
+                                        ),
+                                    ],
+                                    className="six columns pretty_container",
+                                    id="radio-div",
+                                ),
+                            ]
+                        ),
+                        html.Div(
+                            children=[
+                                html.H4(
+                                    [
+                                        "Distribución de consumo de datos",
+                                        html.Img(
+                                            id="show-map-modal",
+                                            # src="assets/question-circle-solid.svg",
+                                            className="info-icon",
+                                        ),
+                                    ],
+                                    className="container_title",
+                                ),
+                                dcc.Graph(
+                                    id="map",
+                                    figure=fig,
+                                    config={"displayModeBar": False},
+                                ),
+                            ],
+                            className="twelve columns pretty-container",
+                            style={"width": "98%", "Margin-left": "10px",},
+                            id="map-div",
+                        ),
+                    ]
                 ),
-            ]),
-            html.Div(children=[
-                html.Div(children=[
-                    #numero de registros
-                    html.H4([
-                        "Cantidad de registros",
-                        ], 
-                        className="container_title",
-                        style={
-                            'text-align': 'center',
-                            'font': {
-                                'color': 'white',
-                                'size': 40,
-                                }
-                            },
-                    ),
-                    dcc.Loading(
-                        dcc.Graph(
-                            id='indicator-graph2',
-                            figure=blank_fig(row_heights[1], 6831617),
-                            config={'displayModeBar': False},
-                        ),
-                        className='svg-container',
-                        style={'height': 250},
-                    ),
-                    #numero de antenas
-                    html.H4([
-                        "Cantidad de radiobases",], 
-                        className="container_title",
-                        style={
-                            'text-align': 'center',
-                            'font': {
-                                'color': 'white',
-                                'size': 40,
-                                }
-                            },
-                        ),
-                    dcc.Loading(
-                        dcc.Graph(
-                            id='indicator-graph3',
-                            figure=blank_fig(row_heights[1], df["sitio"].nunique()),
-                            config={'displayModeBar': False},
-                        ),
-                        className='svg-container',
-                        style={'height': 250},
-                    ),
-                    #fecha
-                    html.H4(['Fecha de registros'],
-                    className="container_title",
-                    style={
-                        'height':30,
-                        'text-align': 'center',
-                        'font': {
-                            'color': 'white',
-                            'size': 40,
-                            }
-                        },
-                    ),
-                    dcc.Markdown(''' ''', style={'height':10,'padding':0}),
-                    html.P("Oct - Nov, 2019",
-                        className='svg-container',
-                        style={
-                        'height': 60,
-                        'padding':0,
-                        'text-align': 'center',
-                        'vertical-align': 'baseline',
-                        'justify-content': 'center',
-                        'font-size': 40,
-                        'color': 'white'
-                        },
-                    ),
-                ], 
-                className='six columns pretty_container', 
-                id="indicator-div"),
-
-                html.Div(children=[
-                        html.H4([
-                            "Consumo de datos por tipo de plan",
-                            ], 
-                        className="container_title"),
-                        dcc.Graph(
-                            id='radio-histogram',
-                            figure=fig2,
-                            config={'displayModeBar': False}
-                        ),
-                    ], 
-                className='six columns pretty_container', 
-                id="radio-div"),
-            ]),
-            html.Div(children=[
-                html.H4([
-                    "Distribución de consumo de datos",
-                    html.Img(
-                        id='show-map-modal',
-                        #src="assets/question-circle-solid.svg",
-                        className='info-icon',
-                    ),
-                ], className="container_title"),
-                dcc.Graph(
-                    id='map',
-                    figure=fig,
-                    config={'displayModeBar': False},
-                ),
-            ], 
-            className='twelve columns pretty-container',
-                style={
-                    'width': '98%',
-                    'Margin-left': '10px',
-                },
-                id="map-div"
-            )
-            ]),
             ],
         ),
     ],
@@ -452,9 +461,7 @@ map_graph = html.Div(
         dcc.Graph(id="map-graph", style={"backgroundColor": "#343332"}),
         html.Div(
             className="text-padding",
-            children=html.P(
-                "Consumo de datos en zona metropolitana de MTY"
-            ),
+            children=html.P("Consumo de datos en zona metropolitana de MTY"),
         ),
         dcc.Graph(id="histogram"),
     ],
@@ -501,6 +508,7 @@ app.layout = html.Div(
     ]
 )
 
+
 def get_selection(pickedDate, pickedTech, pickedPlan):
     # Obtener cantidad de bytes por semana.
     # Pinta de otro color la barra seleccionada
@@ -530,20 +538,32 @@ def get_selection(pickedDate, pickedTech, pickedPlan):
 
     weeks = df["fecha"].unique()
 
-
     # utilizando 4 semanas
     for week in weeks:
         xVal.append(np.datetime_as_string(week, unit="D"))
 
-        yVal_control.append(df_subHist[(df_subHist["fecha"] == week) & (df_subHist["tipo_plan"] == 'Control')]["sum_bytes"].sum())
-        yVal_prepago.append(df_subHist[(df_subHist["fecha"] == week) & (df_subHist["tipo_plan"] == 'Prepago')]["sum_bytes"].sum())
-        yVal_postpago.append(df_subHist[(df_subHist["fecha"] == week) & (df_subHist["tipo_plan"] == 'Postpago')]["sum_bytes"].sum())
+        yVal_control.append(
+            df_subHist[
+                (df_subHist["fecha"] == week) & (df_subHist["tipo_plan"] == "Control")
+            ]["sum_bytes"].sum()
+        )
+        yVal_prepago.append(
+            df_subHist[
+                (df_subHist["fecha"] == week) & (df_subHist["tipo_plan"] == "Prepago")
+            ]["sum_bytes"].sum()
+        )
+        yVal_postpago.append(
+            df_subHist[
+                (df_subHist["fecha"] == week) & (df_subHist["tipo_plan"] == "Postpago")
+            ]["sum_bytes"].sum()
+        )
 
-    return [np.array(xVal),
-            [np.array(yVal_control), [colorVal[0]]*len(weeks)],
-            [np.array(yVal_prepago), [colorVal[1]]*len(weeks)],
-            [np.array(yVal_postpago), [colorVal[2]]*len(weeks)]
-            ]
+    return [
+        np.array(xVal),
+        [np.array(yVal_control), [colorVal[0]] * len(weeks)],
+        [np.array(yVal_prepago), [colorVal[1]] * len(weeks)],
+        [np.array(yVal_postpago), [colorVal[2]] * len(weeks)],
+    ]
 
 
 # Output de histograma
@@ -558,60 +578,60 @@ def get_selection(pickedDate, pickedTech, pickedPlan):
 )
 def update_histogram(pickedWeek, pickedTech, pickedPlan):
 
-    xVal, control, prepago, postpago = get_selection(pickedWeek, pickedTech, pickedPlan) 
-    yVal = np.array([c + p + pp for c,p,pp in zip(control[0] , prepago[0] , postpago[0])])
-
+    xVal, control, prepago, postpago = get_selection(pickedWeek, pickedTech, pickedPlan)
+    yVal = np.array(
+        [c + p + pp for c, p, pp in zip(control[0], prepago[0], postpago[0])]
+    )
 
     figure = go.Figure(
         data=[
             go.Bar(
                 x=xVal,
                 y=prepago[0],
-                marker_color = "#3E4989", #"#28C86D",
+                marker_color="#3E4989",  # "#28C86D",
                 hoverinfo="y",
-                name='Prepago',
+                name="Prepago",
             ),
             go.Bar(
                 x=xVal,
                 y=control[0],
-                marker_color = "#22928B", #"#F4EC15",
+                marker_color="#22928B",  # "#F4EC15",
                 hoverinfo="y",
-                name='Control',
+                name="Control",
             ),
             go.Bar(
                 x=xVal,
                 y=postpago[0],
-                marker_color = "#B4DE2B", #"#2E4EA4",
+                marker_color="#B4DE2B",  # "#2E4EA4",
                 hoverinfo="y",
-                name='Postpago',
+                name="Postpago",
             ),
-            
         ],
-
     )
-    figure.update_layout(barmode='stack',
-                     plot_bgcolor="#323130",
-                     margin=go.layout.Margin(l=50, r=15, t=0, b=0),
-                     font=dict(color="white"),
-                     paper_bgcolor="#323130",
-                     xaxis = dict(type = "date",
-                                  tickangle=0.1),
-                     yaxis=dict(showgrid=False),
-                     legend_orientation="h",
-                     legend=dict(x=-0.056, y=1.2),
-                     annotations=[
-                         dict(
-                            x=xi,
-                            y=yi,
-                           text=humanize.naturalsize(yi),
-                           arrowsize= 0.3,
-                           xshift= 7,
-                           standoff = 0,
-                           arrowcolor = "#323130",
-                           font=dict(color="white"),
-                         ) for xi, yi in zip(xVal, yVal)
-                         ],
-                     )
+    figure.update_layout(
+        barmode="stack",
+        plot_bgcolor="#323130",
+        margin=go.layout.Margin(l=50, r=15, t=0, b=0),
+        font=dict(color="white"),
+        paper_bgcolor="#323130",
+        xaxis=dict(type="date", tickangle=0.1),
+        yaxis=dict(showgrid=False),
+        legend_orientation="h",
+        legend=dict(x=-0.056, y=1.2),
+        annotations=[
+            dict(
+                x=xi,
+                y=yi,
+                text=humanize.naturalsize(yi),
+                arrowsize=0.3,
+                xshift=7,
+                standoff=0,
+                arrowcolor="#323130",
+                font=dict(color="white"),
+            )
+            for xi, yi in zip(xVal, yVal)
+        ],
+    )
 
     return figure
 
@@ -681,7 +701,7 @@ def update_graph(datePicked, selectedLocation, chosen_tech, chosen_plan):
                     for i, j, k, l in zip(
                         df["sitio"], df["latitud"], df["longitud"], df_sub["sum_bytes"]
                     )
-                ], 
+                ],
             ),
             # Plot important locations on the map
             go.Scattermapbox(
@@ -712,6 +732,7 @@ def update_graph(datePicked, selectedLocation, chosen_tech, chosen_plan):
 
 
 # Output del Voronoi
+
 
 @app.callback(
     Output("voronoi-graph", "figure"),
@@ -749,11 +770,7 @@ def update_voronoi(datePicked, selectedLocation, chosen_tech, chosen_plan):
         hovermode="closest",
         # colorbar={"tickfont": {"color": "white"}},
         hoverdistance=2,
-        mapbox=dict(
-            accesstoken=mapbox_access_token,
-            bearing=0,
-            pitch=40,
-        ),
+        mapbox=dict(accesstoken=mapbox_access_token, bearing=0, pitch=40,),
     )
     return voronoi_fig
 
